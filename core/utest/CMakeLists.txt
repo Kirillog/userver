@@ -48,3 +48,33 @@ if(USERVER_BUILD_TESTS)
   target_link_libraries(${PROJECT_NAME}-unittest PUBLIC ${PROJECT_NAME})
   add_google_tests(${PROJECT_NAME}-unittest)
 endif()
+
+find_package(Boost REQUIRED COMPONENTS context)
+set(CMAKE_ASAN_FLAGS -fsanitize=address -fsanitize=undefined -DADDRESS_SANITIZER)
+
+add_executable(lincheck-test test.cpp)
+
+target_compile_options(lincheck-test PRIVATE -fpass-plugin=${LTEST_BUILD_PATH}/codegen/libYieldPass.so ${CMAKE_ASAN_FLAGS})
+
+target_link_options(lincheck-test PRIVATE ${CMAKE_ASAN_FLAGS})
+
+target_compile_definitions(lincheck-test PUBLIC
+    $<TARGET_PROPERTY:userver-core,COMPILE_DEFINITIONS>
+)
+
+target_include_directories(lincheck-test
+    PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    PRIVATE
+    $<TARGET_PROPERTY:${PROJECT_NAME},INCLUDE_DIRECTORIES>
+    "/workspaces/LTest"
+)
+
+
+target_link_libraries(lincheck-test
+    PRIVATE
+    gflags
+    ${LTEST_BUILD_PATH}/runtime/libruntime.so
+    ${Boost_LIBRARIES}
+    userver-core
+)

@@ -76,6 +76,10 @@ endif()
 
 add_library(${PROJECT_NAME} STATIC ${SOURCES})
 
+set(LTEST_BUILD_PATH "$ENV{LTEST_BUILD_PATH}")
+target_compile_options(${PROJECT_NAME} PRIVATE -fpass-plugin=${LTEST_BUILD_PATH}/codegen/libYieldPass.so)
+target_link_libraries(${PROJECT_NAME} PRIVATE ${LTEST_BUILD_PATH}/runtime/libruntime.so)
+
 # thread_local usage in Moodycamel is incompatible with userver scheduler
 # that migrates coroutines between threads.
 target_compile_definitions(${PROJECT_NAME} PUBLIC MOODYCAMEL_NO_THREAD_LOCAL)
@@ -124,7 +128,7 @@ add_subdirectory(${USERVER_THIRD_PARTY_DIRS}/http-parser http-parser)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE userver-http-parser userver-llhttp)
 
-set(USERVER_UBOOST_CORO_DEFAULT ON)
+set(USERVER_UBOOST_CORO_DEFAULT OFF)
 if(CMAKE_SYSTEM_NAME MATCHES "Darwin" AND CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
   # Use system Boost.Context and Boost.Coroutine2 with latest patches
   # for arm64, otherwise userver will crash at startup.

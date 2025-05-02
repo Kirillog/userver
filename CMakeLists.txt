@@ -57,6 +57,8 @@ option(
 )
 option(USERVER_BUILD_SAMPLES "Build userver samples" OFF)
 
+set(CMAKE_CXX_STANDARD 20)
+
 if(USERVER_BUILD_TESTS AND NOT USERVER_FEATURE_UTEST)
   message(FATAL_ERROR "Running unit tests for userver requires utest, disabling it is meaningless")
 endif()
