@@ -52,17 +52,16 @@ endif()
 find_package(Boost REQUIRED COMPONENTS context)
 set(CMAKE_ASAN_FLAGS -fsanitize=address -fsanitize=undefined -DADDRESS_SANITIZER)
 
-add_executable(lincheck-test test.cpp)
+function(verify_target target)
+add_executable(${target} ${source_name})
 
-target_compile_options(lincheck-test PRIVATE -fpass-plugin=${LTEST_BUILD_PATH}/codegen/libYieldPass.so ${CMAKE_ASAN_FLAGS})
-
-target_link_options(lincheck-test PRIVATE ${CMAKE_ASAN_FLAGS})
-
-target_compile_definitions(lincheck-test PUBLIC
+target_compile_options(${target} PRIVATE -fpass-plugin=${LTEST_BUILD_PATH}/codegen/libYieldPass.so ${CMAKE_ASAN_FLAGS})
+target_link_options(${target} PRIVATE ${CMAKE_ASAN_FLAGS})
+target_compile_definitions(${target} PUBLIC
     $<TARGET_PROPERTY:userver-core,COMPILE_DEFINITIONS>
 )
 
-target_include_directories(lincheck-test
+target_include_directories(${target}
     PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     PRIVATE
@@ -70,11 +69,21 @@ target_include_directories(lincheck-test
     "/workspaces/LTest"
 )
 
-
-target_link_libraries(lincheck-test
+target_link_libraries(${target}
     PRIVATE
     gflags
     ${LTEST_BUILD_PATH}/runtime/libruntime.so
     ${Boost_LIBRARIES}
     userver-core
 )
+endfunction()
+
+set (USERVER_SOURCE_TARGET_LIST
+    mpscqueue_test.cpp
+    stack_test.cpp
+)
+
+foreach(source_name ${USERVER_SOURCE_TARGET_LIST})
+    get_filename_component(target ${source_name} NAME_WE)
+    verify_target(${target})
+endforeach(source_name ${USERVER_SOURCE_TARGET_LIST})

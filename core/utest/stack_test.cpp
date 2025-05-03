@@ -1,8 +1,12 @@
+#include <deque>
+#include <functional>
 #include <random>
 #include <map>
 #include <userver/concurrent/impl/intrusive_stack.hpp>
 #include <runtime/include/verifying_macro.h>
 #include <runtime/include/verifying.h>
+
+static constexpr size_t SIZE = 100;
 
 USERVER_NAMESPACE_BEGIN
 
@@ -15,8 +19,6 @@ struct BoxInt {
 
 using BoxIntStack =
     concurrent::impl::IntrusiveStack<BoxInt, concurrent::impl::MemberHook<&BoxInt::stack_hook>>;
-
-static constexpr size_t SIZE = 100;
     
 struct IntrusiveStack {
 public:
@@ -41,17 +43,18 @@ public:
     }
 
 private:
-    std::deque<BoxInt> nodes;
+    std::deque<BoxInt> nodes{};
     BoxIntStack stack;
 };
 
 USERVER_NAMESPACE_END
+
 namespace spec {
 struct IntrusiveStackSpec {
     std::vector<int> values;
     std::deque<int> deq;
     IntrusiveStackSpec() {
-        for (size_t i = 0; i < userver::SIZE; ++i) {
+        for (size_t i = 0; i < SIZE; ++i) {
             values.emplace_back(i);
         }
     }
@@ -105,7 +108,7 @@ struct IntrusiveStackSpec {
 // Arguments generator.
 static int a = 0;
 auto generateInt(size_t unused_param) {
-    if (a == userver::SIZE) {
+    if (a == SIZE) {
         a = 0;
     }
     return ltest::generators::makeSingleArg(a++);
@@ -120,9 +123,3 @@ LTEST_ENTRYPOINT(spec_t);
 // Targets.
 target_method(generateInt, void, userver::IntrusiveStack, Push, int);
 target_method(ltest::generators::genEmpty, int, userver::IntrusiveStack, TryPop);
-
-// int main() {
-//     auto st = userver::IntrusiveStack();
-//     st.Push(1);
-//     std::cout << st.TryPop() << "\n";
-// }
