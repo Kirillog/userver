@@ -50,7 +50,11 @@ if(USERVER_BUILD_TESTS)
 endif()
 
 find_package(Boost REQUIRED COMPONENTS context)
-set(CMAKE_ASAN_FLAGS -fsanitize=address -fsanitize=undefined -DADDRESS_SANITIZER)
+
+if(CMAKE_BUILD_TYPE MATCHES Debug)
+    message(STATUS "Debug mode ON")
+    set(CMAKE_ASAN_FLAGS -fsanitize=address -fsanitize=undefined -DADDRESS_SANITIZER)
+endif(CMAKE_BUILD_TYPE MATCHES Debug)
 
 function(verify_target target)
 add_executable(${target} ${source_name})

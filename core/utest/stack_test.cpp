@@ -3,6 +3,7 @@
 #include <random>
 #include <map>
 #include <userver/concurrent/impl/intrusive_stack.hpp>
+#include "runtime/include/value_wrapper.h"
 #include <runtime/include/verifying_macro.h>
 #include <runtime/include/verifying.h>
 
@@ -28,9 +29,8 @@ public:
         }
     }
 
-    non_atomic int Push(size_t index) {
+    non_atomic void Push(size_t index) {
         stack.Push(nodes[index]);
-        return 0;
     }
 
     non_atomic int TryPop() {
@@ -58,9 +58,8 @@ struct IntrusiveStackSpec {
             values.emplace_back(i);
         }
     }
-    int Push(size_t index) {
+    void Push(size_t index) {
         deq.push_back(values[index]);
-        return 0;
     }
 
     int TryPop() {
@@ -72,11 +71,12 @@ struct IntrusiveStackSpec {
         return value;
     }
 
-    using method_t = std::function<int(IntrusiveStackSpec *l, void *args)>;
+    using method_t = std::function<ValueWrapper(IntrusiveStackSpec *l, void *args)>;
     static auto GetMethods() {
-      method_t push_func = [](IntrusiveStackSpec *l, void *args) -> int {
+      method_t push_func = [](IntrusiveStackSpec *l, void *args)  {
         auto real_args = reinterpret_cast<std::tuple<int> *>(args);
-        return l->Push(std::get<0>(*real_args));
+        l->Push(std::get<0>(*real_args));
+        return void_v;
       };
   
       method_t pop_func = [](IntrusiveStackSpec *l, void *args) -> int { return l->TryPop(); };
